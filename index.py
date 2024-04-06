@@ -31,7 +31,7 @@ def Req(_page : int, _st : int):
         list[_st]=len[_st][0:4090]
     return list[_st]
 
-bot = telebot.TeleBot(path = os.environ["TELEGRAM_TOKEN"])
+bot = telebot.TeleBot(os.environ["TELEGRAM_TOKEN"])
 
 @bot.message_handler(commands=['random'])
 def randomProphet(message):

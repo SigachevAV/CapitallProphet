@@ -1,6 +1,4 @@
 requests
 telebot
-BeautifulSoup
-random
-re
-os
+BeautifulSoup4
+lxml
