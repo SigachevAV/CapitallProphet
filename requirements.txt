@@ -1,0 +1,6 @@
+requests
+telebot
+BeautifulSoup
+random
+re
+os
