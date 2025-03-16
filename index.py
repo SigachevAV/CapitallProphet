@@ -1,68 +1,101 @@
+import logging
+import os
+import random
+import re
+
 import requests
 import telebot
 from bs4 import BeautifulSoup
-import random
-import re
-import os
-def Req(_page : int, _st : int):
-    if(_page>66):
-        _page=66
-    elif(_page<1):
-        _page=1
-    if(_page<10):
-        _page="0"+str(_page)
-    res = requests.get("https://www.marxists.org/russkij/marx/1867/capital_vol1/"+ str(_page) + ".htm")
+from dotenv import load_dotenv
+
+
+class ReqException(Exception):
+    pass
+
+
+def req(page: int, line: int):
+    if page > 66:
+        page = 66
+    elif page < 1:
+        page = 1
+    res = requests.get(
+        "https://www.marxists.org/russkij/marx/1867/capital_vol1/"
+        f"{page:02d}.htm"
+    )
     html = BeautifulSoup(res.content, "lxml")
-    list = []
+    lst = []
     i = 2
-    for element in html.findAll("p"):
-        if(i>0):
-            i-=1
+    for element in html.find_all("p"):
+        if i > 0:
+            i -= 1
             continue
-        if(element.text == '\xa0'):
+        if element.text == "\xa0":
             continue
-        list.append(element.text)
-    _st-=1
-    if(_st < 0):
-        _st = 0
-    elif(_st>len(list)):
-        _st=len(list)-1
-    if(len(list[_st])>4090):
-        list[_st]=len[_st][0:4090]
-    return list[_st]
+        lst.append(element.text)
+    line -= 1
+    if line < 0:
+        line = 0
+    elif line > len(lst):
+        line = len(lst) - 1
+    if len(lst[line]) > 4090:
+        lst[line] = lst[line][0:4090]
+    return lst[line]
 
-bot = telebot.TeleBot(os.environ["TELEGRAM_TOKEN"])
 
-@bot.message_handler(commands=['random'])
-def randomProphet(message):
+load_dotenv()
+bot = telebot.TeleBot(os.getenv("TELEGRAM_TOKEN"))
+
+
+@bot.message_handler(commands=["random"])
+def random_prophet_cmd(message):
     try:
-        bot.send_message(message.chat.id, Req(random.randint(1, 66), random.randint(0, 100)))
-    except:
-        bot.send_message(message.chat.id, "Будущеее туманно")
+        bot.send_message(
+            message.chat.id, req(random.randint(1, 66), random.randint(0, 100))
+        )
+    except Exception as ex:
+        logging.error(f"exception at req: {ex}")
+        bot.send_message(message.chat.id, "Будущее туманно")
 
-@bot.message_handler(commands=['prophet'])
-def prophet(message):
-    text =re.findall('[0-9]*', message.text)
-    page = 0
-    stringg = 0
+
+@bot.message_handler(commands=["prophet"])
+def prophet_cmd(message):
+    text = re.findall("[0-9]*", message.text)
     try:
-        stringg=int(text[11])
-        page=int(text[9])
-    except:
+        line = int(text[11])
+        page = int(text[9])
+        bot.send_message(message.chat.id, req(page, line))
+    except ReqException:
+        bot.send_message(
+            message.chat.id,
+            "Боюсь, на эту часть книги пролили кофе"
+        )
+    except Exception as ex:
+        logging.error(f"exception at prophet: {ex}")
         bot.send_message(message.chat.id, "Запрос задан неверно")
-        return
-    try:
-        bot.send_message(message.chat.id, Req(page, stringg))
-    except:
-         bot.send_message(message.chat.id, "Боюсь на эту часть книги пролили кофе")   
-            
-@bot.message_handler(commands=['help'])
-def help(message):
-    bot.send_message(message.chat.id, "/prophet {глава} {строка}\nвведите после команды 2 числа через пробел которые будут означать главу капиталла (от 1 до 66) и строку в ней\nНекоторые строки являються таблицами и по этому предсказания по ним не будет.\n/random\nдаёт вам случайную строку")
-         
-@bot.message_handler(command=['start'])
-def start(message):
-    bot.send_message(message.chat.id, "Этот бот будет гадать на капиталле")
-    help(message=message)
 
-bot.polling(none_stop=True)
+
+@bot.message_handler(commands=["help"])
+def help_cmd(message):
+    bot.send_message(
+        message.chat.id,
+        "/prophet {глава} {строка}\n\n"
+        " - введите после названия команды 2 числа через пробел: "
+        "номер главы и номер строки\n"
+        "Некоторые строки являются таблицами, "
+        "поэтому предсказание осуществимо не всегда!\n\n"
+        "/random\n"
+        " - даёт вам случайную строку",
+    )
+
+
+@bot.message_handler(commands=["start"])
+def start_cmd(message):
+    bot.send_message(
+        message.chat.id,
+        'Этот бот гадает на "Капитале" К. Маркса'
+    )
+    help_cmd(message=message)
+
+
+if __name__ == "__main__":
+    bot.polling(none_stop=True)
