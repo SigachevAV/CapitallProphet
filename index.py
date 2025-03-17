@@ -13,9 +13,9 @@ class ReqException(Exception):
 
 
 def Req(_page: int, _line: int):
-    if _page > 66:
+    if (_page > 66):
         _page = 66
-    elif _page < 1:
+    elif (_page < 1):
         _page = 1
     try:
         res = requests.get(
@@ -26,18 +26,18 @@ def Req(_page: int, _line: int):
         lst = []
         i = 2
         for element in html.find_all("p"):
-            if i > 0:
+            if (i > 0):
                 i -= 1
                 continue
-            if element.text == "\xa0":
+            if (element.text == "\xa0"):
                 continue
             lst.append(element.text)
         _line -= 1
-        if _line < 0:
+        if (_line < 0):
             _line = 0
-        elif _line > len(lst):
+        elif (_line > len(lst)):
             _line = len(lst) - 1
-        if len(lst[_line]) > 4090:
+        if (len(lst[_line]) > 4090):
             lst[_line] = lst[_line][0:4090]
         logging.info("request resolved")
         return lst[_line]
