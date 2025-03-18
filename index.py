@@ -114,4 +114,4 @@ def StartCmd(_message):
 
 if __name__ == "__main__":
     logging.info("polling started")
-    bot.polling(none_stop=True)
+    bot.polling(non_stop=True)
